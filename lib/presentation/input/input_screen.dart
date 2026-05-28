@@ -54,6 +54,11 @@ class _InputView extends StatelessWidget {
               onPressed: () =>
                   context.read<InputBloc>().add(const ResetInputs()),
             ),
+            IconButton(
+              icon: const Icon(Icons.info_outline),
+              tooltip: 'About',
+              onPressed: () => context.push(AppRoutes.about),
+            ),
           ],
         ),
         body: const _InputForm(),

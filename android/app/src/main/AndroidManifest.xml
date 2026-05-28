@@ -2,7 +2,7 @@
     <!-- Required for AdMob, PDF share sheet, and URL launcher -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="konnectrent"
+        android:label="KonnectRent"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <activity

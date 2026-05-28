@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:konnectrent/domain/entities/rent_calc_input.dart';
 import 'package:konnectrent/domain/entities/rent_calc_result.dart';
+import 'package:konnectrent/presentation/about/about_screen.dart';
 import 'package:konnectrent/presentation/chart/chart_screen.dart';
 import 'package:konnectrent/presentation/input/input_screen.dart';
 import 'package:konnectrent/presentation/loan/loan_details_screen.dart';
@@ -21,6 +22,7 @@ class AppRoutes {
   static const prepayment = '/prepayment';
   static const scenario = '/scenario';
   static const rentReceipt = '/rent-receipt';
+  static const about = '/about';
 }
 
 final GoRouter appRouter = GoRouter(
@@ -63,6 +65,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.rentReceipt,
       builder: (_, __) => const RentReceiptScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.about,
+      builder: (_, __) => const AboutScreen(),
     ),
   ],
   errorBuilder: (_, state) => Scaffold(
