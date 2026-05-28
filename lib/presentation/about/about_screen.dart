@@ -3,7 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:konnectrent/core/theme/app_theme.dart';
 
 const _privacyPolicyUrl =
-    'https://fspamodranjana.github.io/konnectrent/privacy-policy.html';
+    'https://fspramodranjana.github.io/konnectrent/privacy-policy.html';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
