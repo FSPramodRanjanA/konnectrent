@@ -1,0 +1,70 @@
+name: konnectrent
+description: "KonnectRent — Offline rent-vs-buy calculator for Indian users."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State management
+  flutter_bloc: ^8.1.6
+  equatable: ^2.0.5
+
+  # Dependency injection
+  get_it: ^7.7.0
+
+  # Navigation
+  go_router: ^14.6.3
+
+  # Persistence
+  shared_preferences: ^2.3.3
+
+  # Charts
+  fl_chart: ^0.69.0
+
+  # PDF generation + sharing
+  pdf: ^3.11.1
+  printing: ^5.13.2
+
+  # Ads
+  google_mobile_ads: ^5.3.0
+
+  # Formatting
+  intl: ^0.19.0
+
+  # Deep links / affiliate URLs
+  url_launcher: ^6.3.1
+
+  # Share card as image
+  screenshot: ^3.0.0
+
+  # Share files + temp directory
+  share_plus: ^10.1.2
+  path_provider: ^2.1.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  bloc_test: ^9.1.7
+  mocktail: ^1.0.4
+  flutter_launcher_icons: ^0.14.3
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/icon/
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: false
+  image_path: "assets/icon/app_icon.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#1565C0"
+  adaptive_icon_foreground: "assets/icon/app_icon.png"
+  web:
+    generate: false

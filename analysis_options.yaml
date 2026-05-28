@@ -1,0 +1,14 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  errors:
+    always_use_package_imports: error
+    avoid_print: warning
+
+linter:
+  rules:
+    - prefer_const_constructors
+    - require_trailing_commas
+    - always_use_package_imports
+    - avoid_print
+    - use_key_in_widget_constructors

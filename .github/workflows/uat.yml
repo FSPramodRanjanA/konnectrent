@@ -1,0 +1,71 @@
+name: UAT Build
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  uat-apk:
+    name: Build UAT APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos
+
+      - name: Run tests
+        run: flutter test
+
+      - name: Build UAT APK (debug)
+        run: |
+          flutter build apk --debug \
+            --dart-define=ADMOB_BANNER_ID=${{ secrets.ADMOB_BANNER_ID_TEST }} \
+            --dart-define=ADMOB_INTERSTITIAL_ID=${{ secrets.ADMOB_INTERSTITIAL_ID_TEST }} \
+            --build-name=1.0.0 \
+            --build-number=${{ github.run_number }}
+
+      - name: Rename APK
+        run: |
+          mv build/app/outputs/flutter-apk/app-debug.apk \
+             build/app/outputs/flutter-apk/konnectrent-uat-${{ github.run_number }}.apk
+
+      - name: Upload UAT APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: konnectrent-uat-${{ github.run_number }}
+          path: build/app/outputs/flutter-apk/konnectrent-uat-${{ github.run_number }}.apk
+          retention-days: 14
+
+      - name: Comment APK link on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `✅ **UAT Build #${{ github.run_number }} is ready!**\n\nDownload the APK from the [Actions artifacts](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).\n\n> Built from commit \`${{ github.sha }}\``
+            })
