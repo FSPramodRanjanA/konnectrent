@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:konnectrent/core/ads/ad_manager.dart';
+import 'package:konnectrent/core/di/injection.dart';
 import 'package:konnectrent/core/pdf/pdf_generator.dart';
 import 'package:konnectrent/core/theme/app_theme.dart';
 import 'package:konnectrent/core/utils/format_utils.dart';
@@ -18,7 +20,9 @@ class PdfScreen extends StatefulWidget {
 
 class _PdfScreenState extends State<PdfScreen> {
   bool _generating = false;
+  bool _rewardEarned = false;
 
+  /// Generates and shares the PDF directly (called after reward earned).
   Future<void> _generateAndShare() async {
     setState(() => _generating = true);
     try {
@@ -31,6 +35,33 @@ class _PdfScreenState extends State<PdfScreen> {
     } finally {
       if (mounted) setState(() => _generating = false);
     }
+  }
+
+  /// Shows rewarded ad first — generates PDF only after user earns reward.
+  void _onGeneratePressed() {
+    // If reward already earned this session, skip the ad
+    if (_rewardEarned) {
+      _generateAndShare();
+      return;
+    }
+
+    final adManager = getIt<AdManager>();
+    adManager.showRewarded(
+      onRewarded: () {
+        setState(() => _rewardEarned = true);
+        _generateAndShare();
+      },
+      onNotReady: () {
+        // Ad not loaded yet — allow export for free with a message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ad not available — exporting for free this time.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+        _generateAndShare();
+      },
+    );
   }
 
   @override
@@ -115,13 +146,23 @@ class _PdfScreenState extends State<PdfScreen> {
                   ),
                 )
               : ElevatedButton.icon(
-                  onPressed: _generateAndShare,
-                  icon: const Icon(Icons.share_outlined),
-                  label: const Text('Generate & Share PDF'),
+                  onPressed: _onGeneratePressed,
+                  icon: Icon(
+                    _rewardEarned
+                        ? Icons.share_outlined
+                        : Icons.play_circle_outline,
+                  ),
+                  label: Text(
+                    _rewardEarned
+                        ? 'Generate & Share PDF'
+                        : 'Watch Ad to Export PDF',
+                  ),
                 ),
           const SizedBox(height: AppTheme.spaceSM),
           Text(
-            'PDF is generated on-device and shared via your system share sheet.',
+            _rewardEarned
+                ? 'PDF is generated on-device and shared via your system share sheet.'
+                : 'Watch a short ad to unlock the PDF export.',
             style: Theme.of(context).textTheme.bodyMedium,
             textAlign: TextAlign.center,
           ),

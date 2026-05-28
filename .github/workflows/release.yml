@@ -89,6 +89,7 @@ jobs:
           flutter build appbundle --release \
             --dart-define=ADMOB_BANNER_ID=${{ secrets.ADMOB_BANNER_ID }} \
             --dart-define=ADMOB_INTERSTITIAL_ID=${{ secrets.ADMOB_INTERSTITIAL_ID }} \
+            --dart-define=ADMOB_REWARDED_ID=${{ secrets.ADMOB_REWARDED_ID }} \
             --build-name=${{ inputs.version_name }} \
             --build-number=${{ github.run_number }}
 
@@ -97,6 +98,7 @@ jobs:
           flutter build apk --release \
             --dart-define=ADMOB_BANNER_ID=${{ secrets.ADMOB_BANNER_ID }} \
             --dart-define=ADMOB_INTERSTITIAL_ID=${{ secrets.ADMOB_INTERSTITIAL_ID }} \
+            --dart-define=ADMOB_REWARDED_ID=${{ secrets.ADMOB_REWARDED_ID }} \
             --build-name=${{ inputs.version_name }} \
             --build-number=${{ github.run_number }}
 
