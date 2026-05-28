@@ -49,13 +49,30 @@ class InputValidator {
       errors['opportunityCostRate'] = 'Opportunity cost rate must be between 0% and 30%';
     }
 
+    if (input.stampDutyRate < 0 || input.stampDutyRate > 15) {
+      errors['stampDutyRate'] = 'Stamp duty must be between 0% and 15%';
+    }
+
+    if (input.registrationRate < 0 || input.registrationRate > 5) {
+      errors['registrationRate'] = 'Registration charges must be between 0% and 5%';
+    }
+
+    if (input.monthlyIncome < 0) {
+      errors['monthlyIncome'] = 'Monthly income cannot be negative';
+    }
+
     return errors.isEmpty ? const Valid() : Invalid(errors);
   }
 
   /// Validates a single raw string field value and returns an error message or null.
   static String? validateField(String fieldName, String value) {
     final trimmed = value.trim();
-    if (trimmed.isEmpty) return 'This field is required';
+
+    // Optional fields — blank is allowed
+    const optionalFields = {'monthlyIncome', 'extraYearlyPayment'};
+    if (trimmed.isEmpty) {
+      return optionalFields.contains(fieldName) ? null : 'This field is required';
+    }
 
     final num = double.tryParse(trimmed);
     if (num == null) return 'Please enter a valid number';
@@ -77,6 +94,14 @@ class InputValidator {
         if (num < 0) return 'Cannot be negative';
       case 'opportunityCostRate':
         if (num < 0 || num > 30) return 'Must be between 0 and 30';
+      case 'stampDutyRate':
+        if (num < 0 || num > 15) return 'Must be between 0% and 15%';
+      case 'registrationRate':
+        if (num < 0 || num > 5) return 'Must be between 0% and 5%';
+      case 'monthlyIncome':
+        if (num < 0) return 'Cannot be negative';
+      case 'extraYearlyPayment':
+        if (num < 0) return 'Cannot be negative';
     }
     return null;
   }

@@ -49,6 +49,7 @@ jobs:
           flutter build apk --debug \
             --dart-define=ADMOB_BANNER_ID=${{ secrets.ADMOB_BANNER_ID_TEST }} \
             --dart-define=ADMOB_INTERSTITIAL_ID=${{ secrets.ADMOB_INTERSTITIAL_ID_TEST }} \
+            --dart-define=ADMOB_REWARDED_ID=${{ secrets.ADMOB_REWARDED_ID_TEST }} \
             --build-name=${{ inputs.version_name }} \
             --build-number=${{ github.run_number }}
 
