@@ -1,9 +1,25 @@
 name: Release Build
 
+# Manual trigger only — go to Actions tab → Release Build → Run workflow
 on:
-  push:
-    tags:
-      - 'v*.*.*'           # triggers on v1.0.0, v1.2.3, etc.
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: 'Version name (e.g. 1.2.0)'
+        required: true
+        default: '1.0.0'
+      release_notes:
+        description: 'Release notes for the GitHub Release'
+        required: false
+        default: 'New release'
+      create_github_release:
+        description: 'Create a GitHub Release after build?'
+        required: true
+        type: choice
+        options:
+          - 'yes'
+          - 'no'
+        default: 'yes'
 
 jobs:
   release-aab:
@@ -13,14 +29,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Extract version from tag
-        id: version
-        run: |
-          TAG=${GITHUB_REF#refs/tags/v}
-          echo "name=$TAG" >> $GITHUB_OUTPUT
-          # build number = run number for uniqueness
-          echo "code=${{ github.run_number }}" >> $GITHUB_OUTPUT
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -44,12 +52,10 @@ jobs:
       - name: Run tests
         run: flutter test
 
-      # Decode the base64-encoded keystore stored in GitHub Secrets
       - name: Decode keystore
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/release.jks
 
-      # Write key.properties so Gradle can find the signing config
       - name: Create key.properties
         run: |
           cat > android/key.properties << EOF
@@ -59,7 +65,6 @@ jobs:
           keyPassword=${{ secrets.KEY_PASSWORD }}
           EOF
 
-      # Wire key.properties into build.gradle.kts signing config
       - name: Configure signing in build.gradle.kts
         run: |
           cat >> android/app/build.gradle.kts << 'EOF'
@@ -84,61 +89,78 @@ jobs:
           flutter build appbundle --release \
             --dart-define=ADMOB_BANNER_ID=${{ secrets.ADMOB_BANNER_ID }} \
             --dart-define=ADMOB_INTERSTITIAL_ID=${{ secrets.ADMOB_INTERSTITIAL_ID }} \
-            --build-name=${{ steps.version.outputs.name }} \
-            --build-number=${{ steps.version.outputs.code }}
+            --build-name=${{ inputs.version_name }} \
+            --build-number=${{ github.run_number }}
 
-      - name: Rename AAB
-        run: |
-          mv build/app/outputs/bundle/release/app-release.aab \
-             build/app/outputs/bundle/release/konnectrent-${{ steps.version.outputs.name }}.aab
-
-      - name: Build release APK (for direct install testing)
+      - name: Build release APK
         run: |
           flutter build apk --release \
             --dart-define=ADMOB_BANNER_ID=${{ secrets.ADMOB_BANNER_ID }} \
             --dart-define=ADMOB_INTERSTITIAL_ID=${{ secrets.ADMOB_INTERSTITIAL_ID }} \
-            --build-name=${{ steps.version.outputs.name }} \
-            --build-number=${{ steps.version.outputs.code }}
+            --build-name=${{ inputs.version_name }} \
+            --build-number=${{ github.run_number }}
+
+      - name: Rename artifacts
+        run: |
+          mv build/app/outputs/bundle/release/app-release.aab \
+             build/app/outputs/bundle/release/konnectrent-${{ inputs.version_name }}.aab
+          mv build/app/outputs/apk/release/app-release.apk \
+             build/app/outputs/apk/release/konnectrent-${{ inputs.version_name }}.apk
 
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
         with:
-          name: konnectrent-release-aab-${{ steps.version.outputs.name }}
-          path: build/app/outputs/bundle/release/konnectrent-${{ steps.version.outputs.name }}.aab
+          name: konnectrent-release-aab-${{ inputs.version_name }}
+          path: build/app/outputs/bundle/release/konnectrent-${{ inputs.version_name }}.aab
           retention-days: 90
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: konnectrent-release-apk-${{ steps.version.outputs.name }}
-          path: build/app/outputs/apk/release/app-release.apk
+          name: konnectrent-release-apk-${{ inputs.version_name }}
+          path: build/app/outputs/apk/release/konnectrent-${{ inputs.version_name }}.apk
           retention-days: 90
 
-      # Create GitHub Release and attach both files
       - name: Create GitHub Release
+        if: inputs.create_github_release == 'yes'
         uses: softprops/action-gh-release@v2
         with:
-          name: KonnectRent ${{ steps.version.outputs.name }}
-          tag_name: ${{ github.ref_name }}
+          name: KonnectRent ${{ inputs.version_name }}
+          tag_name: v${{ inputs.version_name }}
           draft: false
           prerelease: false
-          generate_release_notes: true
           files: |
-            build/app/outputs/bundle/release/konnectrent-${{ steps.version.outputs.name }}.aab
-            build/app/outputs/apk/release/app-release.apk
+            build/app/outputs/bundle/release/konnectrent-${{ inputs.version_name }}.aab
+            build/app/outputs/apk/release/konnectrent-${{ inputs.version_name }}.apk
           body: |
-            ## KonnectRent ${{ steps.version.outputs.name }}
+            ## KonnectRent ${{ inputs.version_name }}
 
-            ### Install
-            - **Play Store:** Upload the `.aab` to Google Play Console → Production track.
-            - **Direct install:** Download `app-release.apk` and side-load.
+            ${{ inputs.release_notes }}
 
-            ### Build info
-            - Version: `${{ steps.version.outputs.name }}`
-            - Build number: `${{ steps.version.outputs.code }}`
+            ---
+            **Build info**
+            - Version: `${{ inputs.version_name }}`
+            - Build number: `${{ github.run_number }}`
             - Commit: `${{ github.sha }}`
+            - Branch: `${{ github.ref_name }}`
 
-      # Clean up secrets from runner
+            **Install**
+            - Play Store: upload the `.aab` to Google Play Console
+            - Direct install: download `konnectrent-${{ inputs.version_name }}.apk`
+
       - name: Clean up keystore
         if: always()
         run: rm -f android/app/release.jks android/key.properties
+
+      - name: Summary
+        run: |
+          echo "## ✅ Release Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Version | \`${{ inputs.version_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build # | \`${{ github.run_number }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| GitHub Release | ${{ inputs.create_github_release }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📦 Download the AAB and APK from the **Artifacts** section above." >> $GITHUB_STEP_SUMMARY

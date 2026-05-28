@@ -1,11 +1,17 @@
 name: UAT Build
 
+# Manual trigger only — go to Actions tab → UAT Build → Run workflow
 on:
-  push:
-    branches: [develop]
-  pull_request:
-    branches: [main]
-    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: 'Version name (e.g. 1.0.0)'
+        required: true
+        default: '1.0.0'
+      notes:
+        description: 'Build notes (optional)'
+        required: false
+        default: ''
 
 jobs:
   uat-apk:
@@ -43,29 +49,31 @@ jobs:
           flutter build apk --debug \
             --dart-define=ADMOB_BANNER_ID=${{ secrets.ADMOB_BANNER_ID_TEST }} \
             --dart-define=ADMOB_INTERSTITIAL_ID=${{ secrets.ADMOB_INTERSTITIAL_ID_TEST }} \
-            --build-name=1.0.0 \
+            --build-name=${{ inputs.version_name }} \
             --build-number=${{ github.run_number }}
 
       - name: Rename APK
         run: |
           mv build/app/outputs/flutter-apk/app-debug.apk \
-             build/app/outputs/flutter-apk/konnectrent-uat-${{ github.run_number }}.apk
+             build/app/outputs/flutter-apk/konnectrent-uat-${{ inputs.version_name }}-${{ github.run_number }}.apk
 
-      - name: Upload UAT APK artifact
+      - name: Upload UAT APK
         uses: actions/upload-artifact@v4
         with:
-          name: konnectrent-uat-${{ github.run_number }}
-          path: build/app/outputs/flutter-apk/konnectrent-uat-${{ github.run_number }}.apk
+          name: konnectrent-uat-${{ inputs.version_name }}-${{ github.run_number }}
+          path: build/app/outputs/flutter-apk/konnectrent-uat-${{ inputs.version_name }}-${{ github.run_number }}.apk
           retention-days: 14
 
-      - name: Comment APK link on PR
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `✅ **UAT Build #${{ github.run_number }} is ready!**\n\nDownload the APK from the [Actions artifacts](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).\n\n> Built from commit \`${{ github.sha }}\``
-            })
+      - name: Summary
+        run: |
+          echo "## ✅ UAT Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Version | \`${{ inputs.version_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build # | \`${{ github.run_number }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Branch | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Notes | ${{ inputs.notes }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📦 Download the APK from the **Artifacts** section above." >> $GITHUB_STEP_SUMMARY
