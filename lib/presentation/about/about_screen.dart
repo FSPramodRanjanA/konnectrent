@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:konnectrent/core/theme/app_theme.dart';
 
-// Replace this URL with your hosted privacy policy before Play Store submission
 const _privacyPolicyUrl =
-    'https://fspamodranjana.github.io/konnectrent/privacy-policy';
+    'https://fspamodranjana.github.io/konnectrent/privacy-policy.html';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
