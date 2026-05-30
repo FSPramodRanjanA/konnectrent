@@ -28,6 +28,8 @@ jobs:
   release-aab:
     name: Build & Sign Release AAB
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
