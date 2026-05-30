@@ -19,3 +19,9 @@
 -keepattributes *Annotation*
 -keepattributes Signature
 -dontwarn sun.misc.**
+
+# Flutter references Play Core split-install classes for deferred components.
+# This app does not use deferred components, so suppress the missing-class errors.
+-dontwarn com.google.android.play.core.splitcompat.SplitCompatApplication
+-dontwarn com.google.android.play.core.splitinstall.**
+-dontwarn com.google.android.play.core.tasks.**
