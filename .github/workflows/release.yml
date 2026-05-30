@@ -21,6 +21,9 @@ on:
           - 'no'
         default: 'yes'
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   release-aab:
     name: Build & Sign Release AAB
